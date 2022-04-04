@@ -1,0 +1,18 @@
+oka_pagination:
+    db_driver: orm
+    twig: 
+        enabled: false
+    filters:
+        createdAt:
+            cast_type: datetime
+    sort:
+        delimiter: ','
+        order:
+            createdAt: desc
+    pagination_managers:
+        district:
+            db_driver: orm
+            class: App\Entity\District
+        region:
+            db_driver: orm
+            class: App\Entity\Region
