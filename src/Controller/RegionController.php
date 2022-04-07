@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\District;
 use App\Entity\Region;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -47,7 +48,9 @@ class RegionController extends AbstractController
      */
     #[Route(name:"create", methods:"POST")]
     #[AccessControl(version:"v1", protocol:"rest", formats:"json")]
-    #[RequestContent(constraints:"createConstraints")]
+    /**
+     * @RequestContent(constraints="createConstraints")
+     */
     public function create(EntityManagerInterface $em, string $version, string $protocol, array $requestContent): Response
     {
         $region = $this->edit(new Region(), $requestContent);
@@ -74,7 +77,9 @@ class RegionController extends AbstractController
      */
     #[Route(name:"update", methods:["PUT", "PATCH"], path:"/{id}")]
     #[AccessControl(version:"v1", protocol:"rest", formats:"json")]
-    #[RequestContent(constraints:"updateConstraints")]
+    /**
+     * @RequestContent(constraints="createConstraints")
+     */
     public function update(EntityManagerInterface $em, Region $region, string $version, string $protocol, array $requestContent): Response
     {
         $this->edit($region, $requestContent);
@@ -95,22 +100,35 @@ class RegionController extends AbstractController
             $em->remove($region);
             $em->flush();
         } catch (\Exception $e) {
-            throw new ConflictHttpException($this->get('translator')->trans('http_error.request_cannot_be_processed', ['%id%' => $region->getId()], 'errors'), $e);
+            throw new ConflictHttpException($this->container->get('translator')->trans('http_error.request_cannot_be_processed', ['%id%' => $region->getId()], 'errors'), $e);
         }
 
         return new JsonResponse(null, 204);
     }
 
+    
     /**
-     * @param \App\Entity\Region
+     * @param \App\Entity\region
      */
+    
     protected function edit(object $object, array $requestContent): object
     {
         /** @var \App\Entity\Region $region */
         $region = parent::edit($object, $requestContent);
 
+        if (true === isset($requestContent['district'])) {
+            $em = $this->container->get("doctrine.orm.entity_manager");
+            $region->setDistrict($em->find(District::class, $requestContent['district']));
+        }
+
         return $region;
     }
+
+    protected static function getExcludedFields(): array
+    {
+        return ["district",];
+    }
+    
 
     private static function updateConstraints(): Assert\Collection
     {
@@ -131,6 +149,7 @@ class RegionController extends AbstractController
         return new Assert\Collection([
             'name' => new $className(new Assert\NotBlank()),
             'capital' => new $className(new Assert\NotBlank()),
+            'district' => new $className(new Assert\NotBlank())
         ]);
     }
 }

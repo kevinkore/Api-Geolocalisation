@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Common;
+use App\Entity\Department;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -27,7 +28,7 @@ Class CommonController extends AbstractController
     {
         try {
             /** @var \Oka\PaginationBundle\Pagination\Page $page */
-            $page = $pm->paginate(Common::class, $request, [], ['createdAt' => 'DESC']);
+            $page = $pm->paginate("common", $request, [], ['createdAt' => 'DESC']);
         } catch (\Oka\PaginationBundle\Exception\PaginationException $e) {
             throw new BadRequestHttpException($e->getMessage(), $e);
         }
@@ -45,7 +46,9 @@ Class CommonController extends AbstractController
      */
     #[Route(name:"create", methods:"POST")]
     #[AccessControl(version:"v1", protocol:"rest", formats:"json")]
-    #[RequestContent(constraints:"createConstraints")]
+    /**
+     * @RequestContent(constraints="createConstraints")
+     */
     public function create(EntityManagerInterface $em, string $version, string $protocol, array $requestContent): Response
     {
         $common = $this->edit(new Common(), $requestContent);
@@ -71,7 +74,9 @@ Class CommonController extends AbstractController
      */
     #[Route(name:"update", methods:["PUT", "PATCH"], path:"/{id}")]
     #[AccessControl(version:"v1", protocol:"rest", formats:"json")]
-    #[RequestContent(constraints:"updateConstraints")] 
+    /**
+     * @RequestContent(constraints="createConstraints")
+     */
     public function update(EntityManagerInterface $em, Common $common, string $version, string $protocol, array $requestContent): Response
     {
         $this->edit($common, $requestContent);
@@ -92,22 +97,28 @@ Class CommonController extends AbstractController
             $em->remove($common);
             $em->flush();
         } catch (\Exception $e) {
-            throw new ConflictHttpException($this->get('translator')->trans('http_error.request_cannot_be_processed', ['%id%' => $common->getId()], 'errors'), $e);
+            throw new ConflictHttpException($this->container->get('translator')->trans('http_error.request_cannot_be_processed', ['%id%' => $common->getId()], 'errors'), $e);
         }
 
         return new JsonResponse(null, 204);
     }
- 
 
-    /**
-     * @param \App\Entity\Common
-     */
     protected function edit(object $object, array $requestContent): object
     {
         /** @var \App\Entity\Common $common */
         $common = parent::edit($object, $requestContent);
 
+        if (true === isset($requestContent['department'])) {
+            $em = $this->container->get("doctrine.orm.entity_manager");
+            $common->setDepartment($em->find(Department::class, $requestContent['department']));
+        }
+
         return $common;
+    }
+
+    protected static function getExcludedFields(): array
+    {
+        return ["department"];
     }
 
     private static function updateConstraints(): Assert\Collection
@@ -128,6 +139,7 @@ Class CommonController extends AbstractController
 
         return new Assert\Collection([
             'name' => new $className(new Assert\NotBlank()),
+            'department' => new $className(new Assert\NotBlank())
         ]);
     }
 }

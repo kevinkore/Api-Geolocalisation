@@ -3,13 +3,15 @@
 namespace App\Entity;
 
 use App\Entity\CommunalSector;
+use Symfony\Component\Uid\Uuid;
 use Doctrine\ORM\Mapping as ORM;
 use App\Behviour\TimeBehviourTrait;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
-use Symfony\Component\Uid\Uuid;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity()]
+#[ORM\HasLifecycleCallbacks]
 class Common
 {
     use TimeBehviourTrait;
@@ -18,17 +20,19 @@ class Common
     #[ORM\Column(type: "uuid", unique: true)]
     #[ORM\GeneratedValue(strategy: "CUSTOM")]
     #[ORM\CustomIdGenerator(class: "doctrine.uuid_generator")]
+    #[Groups(["details","summary"])]
     private ?Uuid $id;
 
-    #[ORM\Column(type:'string', length:'255')]
+    #[ORM\Column(type:'string', length:'255', unique:true)]
+    #[Groups(["details","summary"])]
     private string $name;
 
     #[ORM\ManyToOne(inversedBy: 'common')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\JoinColumn(nullable: false, name: 'departement_id', referencedColumnName: 'id')]
     private Department $department;
 
     #[ORM\OneToMany(targetEntity: CommunalSector::class, mappedBy: "common", orphanRemoval: true)]
-    private $communalSector;
+    private $communalSectors;
 
 
     public function __construct()

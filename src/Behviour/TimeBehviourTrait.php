@@ -5,18 +5,18 @@ namespace App\Behviour;
 
 use DateTimeImmutable;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 
 trait TimeBehviourTrait
 {
 
-
     #[ORM\Column(type: 'datetime_immutable')]
-    
+    #[Groups(["details"])]
     protected  ?DateTimeImmutable $createdAt;
 
     #[ORM\Column(type: 'datetime_immutable', nullable: true)]
-
+    #[Groups(["details"])]
     protected  ?DateTimeImmutable $updatedAt;
 
     /**
@@ -28,12 +28,9 @@ trait TimeBehviourTrait
     }
 
     #[ORM\PrePersist]
-    /**
-     * @ORM\PrePersist
-     */
     public function setCreatedAt(): self
     {
-        $this->createdAt = new  DateTimeImmutable();
+        $this->createdAt = new \DateTimeImmutable();
 
         return $this;
     }
@@ -47,12 +44,9 @@ trait TimeBehviourTrait
     }
 
     #[ORM\PreFlush]
-    /**
-     * @ORM\PreFlush
-     */
     public function setUpdatedAt(): self
     {
-        $this->updatedAt = new  DateTimeImmutable();
+        $this->updatedAt = new  \DateTimeImmutable();
 
         return $this;
     }

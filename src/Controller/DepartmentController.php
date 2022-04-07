@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Department;
+use App\Entity\Region;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -45,7 +46,9 @@ Class DepartmentController extends AbstractController
      */
     #[Route(name:"create", methods:"POST")]
     #[AccessControl(version:"v1", protocol:"rest", formats:"json")]
-    #[RequestContent(constraints:"createConstraints")]
+    /**
+     * @RequestContent(constraints="createConstraints")
+     */
     public function create(EntityManagerInterface $em, string $version, string $protocol, array $requestContent): Response
     {
         $department = $this->edit(new Department(), $requestContent);
@@ -72,7 +75,9 @@ Class DepartmentController extends AbstractController
      */
     #[Route(name:"update", methods:["PUT", "PATCH"], path:"/{id}")]
     #[AccessControl(version:"v1", protocol:"rest", formats:"json")]
-    #[RequestContent(constraints:"updateConstraints")] 
+    /**
+     * @RequestContent(constraints="createConstraints")
+     */ 
     public function update(EntityManagerInterface $em, Department $department, string $version, string $protocol, array $requestContent): Response
     {
         $this->edit($department, $requestContent);
@@ -93,22 +98,28 @@ Class DepartmentController extends AbstractController
             $em->remove($department);
             $em->flush();
         } catch (\Exception $e) {
-            throw new ConflictHttpException($this->get('translator')->trans('http_error.request_cannot_be_processed', ['%id%' => $department->getId()], 'errors'), $e);
+            throw new ConflictHttpException($this->container->get('translator')->trans('http_error.request_cannot_be_processed', ['%id%' => $department->getId()], 'errors'), $e);
         }
 
         return new JsonResponse(null, 204);
     }
  
-
-    /**
-     * @param \App\Entity\Department
-     */
     protected function edit(object $object, array $requestContent): object
     {
         /** @var \App\Entity\Department $department */
         $department = parent::edit($object, $requestContent);
 
+        if (true === isset($requestContent['region'])) {
+            $em = $this->container->get("doctrine.orm.entity_manager");
+            $department->setRegion($em->find(Region::class, $requestContent['region']));
+        }
+
         return $department;
+    }
+
+    protected static function getExcludedFields(): array
+    {
+        return ["region"];
     }
 
     private static function updateConstraints(): Assert\Collection
@@ -129,6 +140,7 @@ Class DepartmentController extends AbstractController
 
         return new Assert\Collection([
             'name' => new $className(new Assert\NotBlank()),
+            'region' => new $className(new Assert\NotBlank()),
         ]);
     }
 }

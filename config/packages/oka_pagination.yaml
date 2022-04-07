@@ -5,6 +5,9 @@ oka_pagination:
     filters:
         createdAt:
             cast_type: datetime
+        name:
+            property_name: name    
+            cast_type: string
     sort:
         delimiter: ','
         order:
@@ -16,3 +19,12 @@ oka_pagination:
         region:
             db_driver: orm
             class: App\Entity\Region
+        department:
+            db_driver: orm
+            class: App\Entity\Department
+        common:
+            db_driver: orm
+            class: App\Entity\Common
+        communalSector:
+            db_driver: orm
+            class: App\Entity\CommunalSector

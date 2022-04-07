@@ -43,15 +43,16 @@ Class DistrictController extends AbstractController
     }
 
     /*
-     *create a region.
+     *create a district.
      */
     #[Route(name:"create", methods:"POST")]
     #[AccessControl(version:"v1", protocol:"rest", formats:"json")]
-    #[RequestContent(constraints:"createConstraints")]
+    /**
+     * @RequestContent(constraints="createConstraints")
+     */
     public function create(EntityManagerInterface $em, string $version, string $protocol, array $requestContent): Response
     {
         $district = $this->edit(new District(), $requestContent);
-
 
         $em->persist($district);
         $em->flush();
@@ -74,7 +75,9 @@ Class DistrictController extends AbstractController
      */
     #[Route(name:"update", methods:["PUT", "PATCH"], path:"/{id}")]
     #[AccessControl(version:"v1", protocol:"rest", formats:"json")]
-    #[RequestContent(constraints:"updateConstraints")] 
+    /**
+     * @RequestContent(constraints="createConstraints")
+     */
     public function update(EntityManagerInterface $em, District $district, string $version, string $protocol, array $requestContent): Response
     {
         $this->edit($district, $requestContent);
@@ -95,22 +98,10 @@ Class DistrictController extends AbstractController
             $em->remove($district);
             $em->flush();
         } catch (\Exception $e) {
-            throw new ConflictHttpException($this->get('translator')->trans('http_error.request_cannot_be_processed', ['%id%' => $district->getId()], 'errors'), $e);
+            throw new ConflictHttpException($this->contenair->get('translator')->trans('http_error.request_cannot_be_processed', ['%id%' => $district->getId()], 'errors'), $e);
         }
 
         return new JsonResponse(null, 204);
-    }
- 
-
-    /**
-     * @param \App\Entity\District
-     */
-    protected function edit(object $object, array $requestContent): object
-    {
-        /** @var \App\Entity\District $district */
-        $district = parent::edit($object, $requestContent);
-
-        return $district;
     }
 
     private static function updateConstraints(): Assert\Collection
@@ -120,7 +111,10 @@ Class DistrictController extends AbstractController
         return $constraints;
     }
 
-    
+    private static function createConstraints(): Assert\Collection
+    {
+        return self::itemConstraints(true);
+    }
 
     private static function itemConstraints(bool $required): Assert\Collection
     {

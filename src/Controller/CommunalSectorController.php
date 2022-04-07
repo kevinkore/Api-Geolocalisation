@@ -2,6 +2,7 @@
 
 namespace App\Controller;
 
+use App\Entity\Common;
 use App\Entity\CommunalSector;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
@@ -27,7 +28,7 @@ Class CommunalSectorController extends AbstractController
     {
         try {
             /** @var \Oka\PaginationBundle\Pagination\Page $page */
-            $page = $pm->paginate('CommunalSector', $request, [], ['createdAt' => 'DESC']);
+            $page = $pm->paginate('communalSector', $request, [], ['createdAt' => 'DESC']);
         } catch (\Oka\PaginationBundle\Exception\PaginationException $e) {
             throw new BadRequestHttpException($e->getMessage(), $e);
         }
@@ -45,7 +46,9 @@ Class CommunalSectorController extends AbstractController
      */
     #[Route(name:"create", methods:"POST")]
     #[AccessControl(version:"v1", protocol:"rest", formats:"json")]
-    #[RequestContent(constraints:"createConstraints")]
+    /**
+     * @RequestContent(constraints="createConstraints")
+     */
     public function create(EntityManagerInterface $em, string $version, string $protocol, array $requestContent): Response
     {
         $communalSector = $this->edit(new CommunalSector(), $requestContent);
@@ -72,7 +75,9 @@ Class CommunalSectorController extends AbstractController
      */
     #[Route(name:"update", methods:["PUT", "PATCH"], path:"/{id}")]
     #[AccessControl(version:"v1", protocol:"rest", formats:"json")]
-    #[RequestContent(constraints:"updateConstraints")] 
+    /**
+     * @RequestContent(constraints="createConstraints")
+     */ 
     public function update(EntityManagerInterface $em, CommunalSector $communalSector, string $version, string $protocol, array $requestContent): Response
     {
         $this->edit($communalSector, $requestContent);
@@ -93,22 +98,28 @@ Class CommunalSectorController extends AbstractController
             $em->remove($communalSector);
             $em->flush();
         } catch (\Exception $e) {
-            throw new ConflictHttpException($this->get('translator')->trans('http_error.request_cannot_be_processed', ['%id%' => $communalSector->getId()], 'errors'), $e);
+            throw new ConflictHttpException($this->container->get('translator')->trans('http_error.request_cannot_be_processed', ['%id%' => $communalSector->getId()], 'errors'), $e);
         }
 
         return new JsonResponse(null, 204);
     }
- 
 
-    /**
-     * @param \App\Entity\CommunalSector
-     */
     protected function edit(object $object, array $requestContent): object
     {
-        /** @var \App\Entity\CommunalSector $communalSector */
+        /** @var \App\Entity\CommunalSector $communalsector */
         $communalSector = parent::edit($object, $requestContent);
 
+        if (true === isset($requestContent['common'])) {
+            $em = $this->container->get("doctrine.orm.entity_manager");
+            $communalSector->setCommon($em->find(Common::class, $requestContent['common']));
+        }
+
         return $communalSector;
+    }
+
+    protected static function getExcludedFields(): array
+    {
+        return ["common"];
     }
 
     private static function updateConstraints(): Assert\Collection
@@ -129,6 +140,7 @@ Class CommunalSectorController extends AbstractController
 
         return new Assert\Collection([
             'name' => new $className(new Assert\NotBlank()),
+            'common' => new $className(new Assert\NotBlank()),
         ]);
     }
 }

@@ -8,8 +8,10 @@ use Doctrine\ORM\Mapping as ORM;
 use App\Behviour\TimeBehviourTrait;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity()]
+#[ORM\HasLifecycleCallbacks]
 class District
 {
     
@@ -19,16 +21,19 @@ class District
     #[ORM\Column(type: "uuid", unique: true)]
     #[ORM\GeneratedValue(strategy: "CUSTOM")]
     #[ORM\CustomIdGenerator(class: "doctrine.uuid_generator")]
+    #[Groups(["details","summary"])]
     private ?Uuid $id;
 
-    #[ORM\Column(type:'string', length:'255')]
+    #[ORM\Column(type:'string', length:'255' , unique:true)]
+    #[Groups(["details","summary"])]
     private string $name;
 
     #[ORM\Column(type:'string', length:'255')]
+    #[Groups(["details"])]
     private string $capital;
 
     #[ORM\OneToMany(targetEntity: Region::class, mappedBy: "district", orphanRemoval: true)]
-    private $region;
+    private $regions;
 
     public function __construct()
     {
@@ -69,7 +74,7 @@ class District
     */
     public function getRegions(): Collection
     {
-        return $this->region;
+        return $this->regions;
     }
 
     public function addRegion(Region $region): self
@@ -94,6 +99,4 @@ class District
 
         return $this;
     }
-
-  
 }

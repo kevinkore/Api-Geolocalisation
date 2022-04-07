@@ -3,11 +3,13 @@
 namespace App\Entity;
 
 use App\Entity\Common;
+use Symfony\Component\Uid\Uuid;
 use Doctrine\ORM\Mapping as ORM;
 use App\Behviour\TimeBehviourTrait;
-use Symfony\Component\Uid\Uuid;
+use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity()]
+#[ORM\HasLifecycleCallbacks]
 class CommunalSector
 {
 
@@ -17,13 +19,15 @@ class CommunalSector
     #[ORM\Column(type: "uuid", unique: true)]
     #[ORM\GeneratedValue(strategy: "CUSTOM")]
     #[ORM\CustomIdGenerator(class: "doctrine.uuid_generator")]
+    #[Groups(["details","summary"])]
     private ?Uuid $id;
 
-    #[ORM\Column(type:'string', length:'255')]
+    #[ORM\Column(type:'string', length:'255' , unique:true)]
+    #[Groups(["details","summary"])]
     private string $name;
 
-    #[ORM\ManyToOne(inversedBy: 'communalSector')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\ManyToOne(inversedBy: 'communalSector', targetEntity: Common::class, fetch: 'EXTRA_LAZY')]
+    #[ORM\JoinColumn(nullable: false, name: 'common_id', referencedColumnName: 'id')]
     private Common $common;
 
 

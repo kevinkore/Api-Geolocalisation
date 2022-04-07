@@ -4,36 +4,42 @@ namespace App\Entity;
 
 
 use App\Entity\Department;
-use App\Behviour\TimeBehviourTrait;
+use Symfony\Component\Uid\Uuid;
 use Doctrine\ORM\Mapping as ORM;
+use App\Behviour\TimeBehviourTrait;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
-use Symfony\Component\Uid\Uuid;
+use Symfony\Component\Serializer\Annotation\Groups;
 
-#[ORM\Entity(Region::class)]
+#[ORM\Entity()]
+#[ORM\HasLifecycleCallbacks]
 class Region
 {
-    
+    use TimeBehviourTrait;
 
     #[ORM\Id]
     #[ORM\Column(type: "uuid", unique: true)]
     #[ORM\GeneratedValue(strategy: "CUSTOM")]
     #[ORM\CustomIdGenerator(class: "doctrine.uuid_generator")]
+    #[Groups(["details","summary"])]
     private ?Uuid $id;
 
-    #[ORM\Column(type:'string', length:'255')]
+    #[ORM\Column(type:'string', length:'255' , unique:true)]
+    #[Groups(["details","summary"])]
     private string $name;
 
     #[ORM\Column(type:'string', length:'255')]
+    #[Groups(["details"])]
     private string $capital;
 
 
-    #[ORM\ManyToOne(inversedBy: 'region')]
-    #[ORM\JoinColumn(nullable: false)]
+    #[ORM\ManyToOne(inversedBy: 'regions', targetEntity: District::class, fetch: 'EXTRA_LAZY')]
+    #[ORM\JoinColumn(name: 'district_id', referencedColumnName: 'id')]
+    #[Groups(["details"])]
     private District $district;
 
     #[ORM\OneToMany(targetEntity: Department::class, mappedBy: "region", orphanRemoval: true)]
-    private $department;
+    private $departments;
 
 
     public function __construct()
@@ -87,7 +93,7 @@ class Region
     */
     public function getDepartements(): Collection
     {
-        return $this->department;
+        return $this->departments;
     }
 
     public function addDepartment(Department $department): self
