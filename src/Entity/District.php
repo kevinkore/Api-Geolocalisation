@@ -10,7 +10,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Annotation\Groups;
 
-#[ORM\Entity()]
+#[ORM\Entity]
 #[ORM\HasLifecycleCallbacks]
 class District
 {
@@ -24,7 +24,7 @@ class District
     #[Groups(["details","summary"])]
     private ?Uuid $id;
 
-    #[ORM\Column(type:'string', length:'255' , unique:true)]
+    #[ORM\Column(type:'string', length:'255' , unique:true )]
     #[Groups(["details","summary"])]
     private string $name;
 
@@ -72,7 +72,7 @@ class District
     /**
     * @return Collection|Region[]
     */
-    public function getRegions(): Collection
+    public function getRegion(): Collection
     {
         return $this->regions;
     }

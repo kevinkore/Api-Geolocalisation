@@ -9,26 +9,34 @@ use App\Behviour\TimeBehviourTrait;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Annotation\Groups;
+use OpenApi\Annotations as OA;
 
-#[ORM\Entity()]
+#[ORM\Entity]
 #[ORM\HasLifecycleCallbacks]
 class Common
 {
     use TimeBehviourTrait;
 
+    /**
+     * @OA\Property(description="The unique identifier of common.")
+     */
     #[ORM\Id]
     #[ORM\Column(type: "uuid", unique: true)]
     #[ORM\GeneratedValue(strategy: "CUSTOM")]
     #[ORM\CustomIdGenerator(class: "doctrine.uuid_generator")]
-    #[Groups(["details","summary"])]
+    #[Groups(["details","summary","listCommon","full"])]
     private ?Uuid $id;
 
-    #[ORM\Column(type:'string', length:'255', unique:true)]
-    #[Groups(["details","summary"])]
+    /**
+     * @OA\Property(type="string",description="The unique name of common." )
+     */
+    #[ORM\Column(type:'string', length:'255', unique:true )]
+    #[Groups(["details","summary","listCommon","full"])]
     private string $name;
 
-    #[ORM\ManyToOne(inversedBy: 'common')]
-    #[ORM\JoinColumn(nullable: false, name: 'departement_id', referencedColumnName: 'id')]
+    #[ORM\ManyToOne(inversedBy: 'commons', targetEntity: Department::class, fetch: 'EXTRA_LAZY' , cascade: ["persist"])]
+    #[ORM\JoinColumn(name: 'department_id', referencedColumnName: 'id')]
+    #[Groups(["referenceVille","listCommon"])]
     private Department $department;
 
     #[ORM\OneToMany(targetEntity: CommunalSector::class, mappedBy: "common", orphanRemoval: true)]

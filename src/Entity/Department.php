@@ -10,7 +10,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Annotation\Groups;
 
-#[ORM\Entity()]
+#[ORM\Entity]
 #[ORM\HasLifecycleCallbacks]
 class Department
 {
@@ -23,17 +23,17 @@ class Department
     #[Groups(["details","summary"])]
     private ?Uuid $id;
 
-    #[ORM\Column(type:'string', length:'255', unique:true)]
+    #[ORM\Column(type:'string', length:'255', unique:true )]
     #[Groups(["details","summary"])]
     private string $name;
 
-    #[ORM\ManyToOne(inversedBy: 'departments', targetEntity: Region::class, fetch: 'EXTRA_LAZY')]
+    #[ORM\ManyToOne(inversedBy: 'departments', targetEntity: Region::class, fetch: 'EXTRA_LAZY', cascade: ["persist"])]
     #[ORM\JoinColumn(nullable: false, name: 'region_id', referencedColumnName: 'id')]
+    #[Groups(["referenceVille"])]
     private Region $region;
 
-    #[ORM\OneToMany(targetEntity: Common::class, mappedBy: "department", orphanRemoval: true)]
+    #[ORM\OneToMany(targetEntity: Common::class, mappedBy: "department", orphanRemoval: true )]
     private $commons;
-
 
     public function __construct()
     {

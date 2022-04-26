@@ -15,14 +15,36 @@ use Oka\PaginationBundle\Pagination\PaginationManager;
 use Symfony\Component\Validator\Constraints as Assert;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
+use OpenApi\Annotations as OA;
 
 #[Route(name:"communal_sector_", path:"/communalSectors", requirements:["id" => "^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$"], defaults: ["version" => "v1", "protocol" => "rest"])]
 Class CommunalSectorController extends AbstractController
 {
     /**
      * Retrieve communalSector list.
-     */
-    #[Route(name:"list",methods:"GET")]
+     *
+     * @OA\Get(
+     *     description="Returns communal sectors",
+     *     operationId=" App\Controller\CommunalSectorController::list",
+     *     @OA\Response(
+     *         response=200,
+     *         description="successful operation",
+     *         @OA\JsonContent(
+     *             @OA\AdditionalProperties(
+     *                 type="integer",
+     *                 format="int64"
+     *             )
+     *         )
+     *     )
+     * )
+     * @OA\Parameter(
+     * name="page",
+     * in="query",
+     * description="number of page",
+     * required=true,)
+     *@OA\Tag(name="communal Sector")
+     **/
+    #[Route(name:"list",methods:"GET",path:"/list&read")]
     #[AccessControl(version:"v1", protocol:"rest", formats:"json")]
     public function list(Request $request, PaginationManager $pm, string $version, string $protocol): Response
     {
@@ -61,9 +83,43 @@ Class CommunalSectorController extends AbstractController
     }
 
     /**
-     * Read a communalSector.
-     */
-    #[Route(name:"read", methods:"GET", path:"/{id}")]
+     * Read a communal sector.
+     *
+     * @OA\Get(
+     *     path="/{Id}",
+     *     description="return communal sector",
+     *     operationId="App\Controller\CommunalSectorController::read",
+     *     @OA\Parameter(
+     *         name="Id",
+     *         in="path",
+     *         description="ID of communal Sector",
+     *         required=true,
+     *         @OA\Schema(
+     *             type="integer",
+     *             format="int64",
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="successful operation",
+     *         @OA\JsonContent(ref="#/components/schemas/Order"),
+     *         @OA\MediaType(
+     *             mediaType="application/xml",
+     *             @OA\Schema(ref="#/components/schemas/Order")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=400,
+     *         description="Invalid ID supplied"
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Order not found"
+     *     )
+     * )
+     * @OA\Tag(name="communal Sector")
+     **/
+    #[Route(name:"read", methods:"GET", path:"/list&read/{id}")]
     #[AccessControl(version:"v1", protocol:"rest", formats:"json")]
     public function read(CommunalSector $communalSector, string $version, string $protocol): Response
     {

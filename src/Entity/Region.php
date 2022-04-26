@@ -11,7 +11,7 @@ use Doctrine\Common\Collections\Collection;
 use Doctrine\Common\Collections\ArrayCollection;
 use Symfony\Component\Serializer\Annotation\Groups;
 
-#[ORM\Entity()]
+#[ORM\Entity]
 #[ORM\HasLifecycleCallbacks]
 class Region
 {
@@ -35,7 +35,7 @@ class Region
 
     #[ORM\ManyToOne(inversedBy: 'regions', targetEntity: District::class, fetch: 'EXTRA_LAZY')]
     #[ORM\JoinColumn(name: 'district_id', referencedColumnName: 'id')]
-    #[Groups(["details"])]
+    #[Groups(["details","referenceVille"])]
     private District $district;
 
     #[ORM\OneToMany(targetEntity: Department::class, mappedBy: "region", orphanRemoval: true)]
@@ -91,7 +91,7 @@ class Region
     /**
     * @return Collection|Department[]
     */
-    public function getDepartements(): Collection
+    public function getDepartement(): Collection
     {
         return $this->departments;
     }

@@ -8,7 +8,7 @@ use Doctrine\ORM\Mapping as ORM;
 use App\Behviour\TimeBehviourTrait;
 use Symfony\Component\Serializer\Annotation\Groups;
 
-#[ORM\Entity()]
+#[ORM\Entity]
 #[ORM\HasLifecycleCallbacks]
 class CommunalSector
 {
@@ -22,11 +22,11 @@ class CommunalSector
     #[Groups(["details","summary"])]
     private ?Uuid $id;
 
-    #[ORM\Column(type:'string', length:'255' , unique:true)]
+    #[ORM\Column(type:'string', length:'255' , unique:true )]
     #[Groups(["details","summary"])]
     private string $name;
 
-    #[ORM\ManyToOne(inversedBy: 'communalSector', targetEntity: Common::class, fetch: 'EXTRA_LAZY')]
+    #[ORM\ManyToOne(inversedBy: 'communalSectors', targetEntity: Common::class, fetch: 'EXTRA_LAZY', cascade: ["persist"])]
     #[ORM\JoinColumn(nullable: false, name: 'common_id', referencedColumnName: 'id')]
     private Common $common;
 
