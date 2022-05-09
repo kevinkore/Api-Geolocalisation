@@ -5,6 +5,10 @@ namespace App\Controller;
 use App\Entity\District;
 use App\Entity\Region;
 use Doctrine\ORM\EntityManagerInterface;
+use Exception;
+use Oka\PaginationBundle\Exception\PaginationException;
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\NotFoundExceptionInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -16,8 +20,9 @@ use Symfony\Component\Validator\Constraints as assert;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use OpenApi\Annotations as OA;
+use Nelmio\ApiDocBundle\Annotation as Nelmio;
 
-#[Route(name:"region_", path:"/regions", requirements:["id" => "^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$"])]
+#[Route(path: "/regions", name: "region_", requirements: ["id" => "^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$"])]
 class RegionController extends AbstractController
 {
     /**
@@ -37,6 +42,7 @@ class RegionController extends AbstractController
      *         )
      *     )
      * )
+     * @Nelmio\Areas({"internal"})
      * @OA\Parameter(
      *         name="page",
      *         in="query",
@@ -44,14 +50,13 @@ class RegionController extends AbstractController
      *         required=true,)
      *@OA\Tag(name="region")
      **/
-    #[Route(name:"list", methods:"GET",path:"/list&read")]
-    #[AccessControl(version:"v1", protocol:"rest", formats:"json")]
-    public function list(Request $request, PaginationManager $pm, string $version, string $protocol): Response
+    #[Route(name:"list", methods:"GET")]
+    #[AccessControl(["version" => "v1", "protocol" => "rest", "formats" => "json"])]
+    public function list(Request $request, PaginationManager $pm): Response
     {
         try {
-            /** @var \Oka\PaginationBundle\Pagination\Page $page */
             $page = $pm->paginate('region', $request, [], ['createdAt' => 'DESC']);
-        } catch (\Oka\PaginationBundle\Exception\PaginationException $e) {
+        } catch (PaginationException $e) {
             throw new BadRequestHttpException($e->getMessage(), $e);
         }
 
@@ -63,15 +68,14 @@ class RegionController extends AbstractController
         );
     }
 
-    /*
-     *create a region.
-     */
-    #[Route(name:"create", methods:"POST")]
-    #[AccessControl(version:"v1", protocol:"rest", formats:"json")]
     /**
+     * create a region.
+     *
      * @RequestContent(constraints="createConstraints")
-     */
-    public function create(EntityManagerInterface $em, string $version, string $protocol, array $requestContent): Response
+    **/
+    #[Route(name:"create", methods:"POST")]
+    #[AccessControl(["version" => "v1", "protocol" => "rest", "formats" => "json"])]
+    public function create(EntityManagerInterface $em, array $requestContent): Response
     {
         $region = $this->edit(new Region(), $requestContent);
 
@@ -117,24 +121,24 @@ class RegionController extends AbstractController
      *         description="Order not found"
      *     )
      * )
+     * @Nelmio\Areas({"internal"})
      * @OA\Tag(name="region")
      **/
-    #[Route(name:"read", methods:"GET", path:"/list&read/{id}")]
-    #[AccessControl(version:"v1", protocol:"rest", formats:"json")]
-    public function read(Region $region, string $version, string $protocol): Response
+    #[Route(path: "/{id}", name: "read", methods: "GET")]
+    #[AccessControl(["version" => "v1", "protocol" => "rest", "formats" => "json"])]
+    public function read(Region $region): Response
     {
         return $this->json($region);
     }
 
     /**
      * Update a region.
-     */
-    #[Route(name:"update", methods:["PUT", "PATCH"], path:"/{id}")]
-    #[AccessControl(version:"v1", protocol:"rest", formats:"json")]
-    /**
+     *
      * @RequestContent(constraints="createConstraints")
      */
-    public function update(EntityManagerInterface $em, Region $region, string $version, string $protocol, array $requestContent): Response
+    #[Route(path: "/{id}", name: "update", methods: ["PUT", "PATCH"])]
+    #[AccessControl(["version" => "v1", "protocol" => "rest", "formats" => "json"])]
+    public function update(EntityManagerInterface $em, Region $region, array $requestContent): Response
     {
         $this->edit($region, $requestContent);
 
@@ -146,28 +150,32 @@ class RegionController extends AbstractController
     /**
      * Delete region.
      */
-    #[Route(name:"delete", methods:"DELETE", path:"/{id}")]
-    #[AccessControl(version:"v1", protocol:"rest", formats:"json")]
-    public function delete(EntityManagerInterface $em, Region $region, string $version, string $protocol): Response
+    #[Route(path: "/{id}", name: "delete", methods: "DELETE")]
+    #[AccessControl(["version" => "v1", "protocol" => "rest", "formats" => "json"])]
+    public function delete(EntityManagerInterface $em, Region $region): Response
     {
         try {
             $em->remove($region);
             $em->flush();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw new ConflictHttpException($this->container->get('translator')->trans('http_error.request_cannot_be_processed', ['%id%' => $region->getId()], 'errors'), $e);
         }
 
         return new JsonResponse(null, 204);
     }
 
-    
+
     /**
-     * @param \App\Entity\region
+     * @param object $object
+     * @param array $requestContent
+     * @return object
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
      */
     
     protected function edit(object $object, array $requestContent): object
     {
-        /** @var \App\Entity\Region $region */
+        /** @var Region $region */
         $region = parent::edit($object, $requestContent);
 
         if (true === isset($requestContent['district'])) {
@@ -186,9 +194,7 @@ class RegionController extends AbstractController
 
     private static function updateConstraints(): Assert\Collection
     {
-        $constraints = self::itemConstraints(false);
-
-        return $constraints;
+        return self::itemConstraints(false);
     }
 
     private static function createConstraints(): Assert\Collection

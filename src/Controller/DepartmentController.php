@@ -5,6 +5,8 @@ namespace App\Controller;
 use App\Entity\Department;
 use App\Entity\Region;
 use Doctrine\ORM\EntityManagerInterface;
+use Exception;
+use Oka\PaginationBundle\Exception\PaginationException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -17,15 +19,17 @@ use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use OpenApi\Annotations as OA;
 
-#[Route(name:"department_", path:"/departments", requirements:["id" => "^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$"], defaults: ["version" => "v1", "protocol" => "rest"])]
+
+#[Route(path: "/departments", name: "department_", requirements: ["id" => "^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$"], defaults: ["version" => "v1", "protocol" => "rest"])]
 Class DepartmentController extends AbstractController
 {
     /**
-     * Retrieve department list.
+     *
+     * List the department .
      *
      * @OA\Get(
-     *     description="Returns departments",
-     *     operationId=" App\Controller\Department::list",
+     *     description="Returns department",
+     *     operationId=" App\Controller\DepartmentController::list",
      *     @OA\Response(
      *         response=200,
      *         description="successful operation",
@@ -38,20 +42,19 @@ Class DepartmentController extends AbstractController
      *     )
      * )
      * @OA\Parameter(
-     * name="page",
-     * in="query",
-     * description="number of page",
-     * required=true,)
-     * @OA\Tag(name="department")
+     *         name="page",
+     *         in="query",
+     *         description="number of page",
+     *         required=true,)
+     *@OA\Tag(name="department")
      **/
-    #[Route(name:"list",methods:"GET",path:"/list&read")]
-    #[AccessControl(version:"v1", protocol:"rest", formats:"json")]
-    public function list(Request $request, PaginationManager $pm, string $version, string $protocol): Response
+    #[Route(name:"list", methods:"GET")]
+    #[AccessControl(["version" => "v1", "protocol" => "rest", "formats" => "json"])]
+    public function list(Request $request, PaginationManager $pm): Response
     {
         try {
-            /** @var \Oka\PaginationBundle\Pagination\Page $page */
             $page = $pm->paginate('department', $request, [], ['createdAt' => 'DESC']);
-        } catch (\Oka\PaginationBundle\Exception\PaginationException $e) {
+        } catch (PaginationException $e) {
             throw new BadRequestHttpException($e->getMessage(), $e);
         }
 
@@ -65,13 +68,11 @@ Class DepartmentController extends AbstractController
 
     /**
      * Create a department.
-     */
-    #[Route(name:"create", methods:"POST")]
-    #[AccessControl(version:"v1", protocol:"rest", formats:"json")]
-    /**
      * @RequestContent(constraints="createConstraints")
      */
-    public function create(EntityManagerInterface $em, string $version, string $protocol, array $requestContent): Response
+    #[Route(name:"create", methods:"POST")]
+    #[AccessControl(["version" => "v1", "protocol" => "rest", "formats" => "json"])]
+    public function create(EntityManagerInterface $em, array $requestContent): Response
     {
         $department = $this->edit(new Department(), $requestContent);
 
@@ -83,16 +84,16 @@ Class DepartmentController extends AbstractController
     }
 
     /**
-     * Read a department.
+     * Read a Department.
      *
      * @OA\Get(
      *     path="/{Id}",
-     *     description="Return department",
-     *     operationId="App\Controller\departmentController::read",
+     *     description="Return a department",
+     *     operationId="App\Controller\DepartmentController::read",
      *     @OA\Parameter(
      *         name="Id",
      *         in="path",
-     *         description="ID of communal Sector",
+     *         description="ID of common",
      *         required=true,
      *         @OA\Schema(
      *             type="integer",
@@ -119,22 +120,20 @@ Class DepartmentController extends AbstractController
      * )
      * @OA\Tag(name="department")
      **/
-    #[Route(name:"read", methods:"GET", path:"/list&read/{id}")]
-    #[AccessControl(version:"v1", protocol:"rest", formats:"json")]
-    public function read(Department $department, string $version, string $protocol): Response
+    #[Route(path: "/{id}", name: "read", methods: "GET")]
+    #[AccessControl(["version" => "v1", "protocol" => "rest", "formats" => "json"])]
+    public function read(Department $department): Response
     {
         return $this->json($department);
     }
 
     /**
      * Update a department.
-     */
-    #[Route(name:"update", methods:["PUT", "PATCH"], path:"/{id}")]
-    #[AccessControl(version:"v1", protocol:"rest", formats:"json")]
-    /**
      * @RequestContent(constraints="createConstraints")
-     */ 
-    public function update(EntityManagerInterface $em, Department $department, string $version, string $protocol, array $requestContent): Response
+     */
+    #[Route(path: "/{id}", name: "update", methods: ["PUT", "PATCH"])]
+    #[AccessControl(["version" => "v1", "protocol" => "rest", "formats" => "json"])]
+    public function update(EntityManagerInterface $em, Department $department, array $requestContent): Response
     {
         $this->edit($department, $requestContent);
 
@@ -146,14 +145,14 @@ Class DepartmentController extends AbstractController
     /**
      * Delete a department.
      */
-    #[Route(name:"delete", methods:"DELETE", path:"/{id}")]
-    #[AccessControl(version:"v1", protocol:"rest", formats:"json")]
-    public function delete(EntityManagerInterface $em, Department $department, string $version, string $protocol): Response
+    #[Route(path: "/{id}", name: "delete", methods: "DELETE")]
+    #[AccessControl(["version" => "v1", "protocol" => "rest", "formats" => "json"])]
+    public function delete(EntityManagerInterface $em, Department $department): Response
     {
         try {
             $em->remove($department);
             $em->flush();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw new ConflictHttpException($this->container->get('translator')->trans('http_error.request_cannot_be_processed', ['%id%' => $department->getId()], 'errors'), $e);
         }
 
@@ -162,7 +161,7 @@ Class DepartmentController extends AbstractController
  
     protected function edit(object $object, array $requestContent): object
     {
-        /** @var \App\Entity\Department $department */
+        /** @var Department $department */
         $department = parent::edit($object, $requestContent);
 
         if (true === isset($requestContent['region'])) {
@@ -180,9 +179,7 @@ Class DepartmentController extends AbstractController
 
     private static function updateConstraints(): Assert\Collection
     {
-        $constraints = self::itemConstraints(false);
-
-        return $constraints;
+        return self::itemConstraints(false);
     }
 
     private static function createConstraints(): Assert\Collection

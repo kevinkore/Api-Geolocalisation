@@ -28,3 +28,6 @@ oka_pagination:
         communalSector:
             db_driver: orm
             class: App\Entity\CommunalSector
+        user:
+            db_driver: orm
+            class: App\Entity\user

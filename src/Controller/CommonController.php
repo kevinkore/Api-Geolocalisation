@@ -5,6 +5,8 @@ namespace App\Controller;
 use App\Entity\Common;
 use App\Entity\Department;
 use Doctrine\ORM\EntityManagerInterface;
+use Exception;
+use Oka\PaginationBundle\Exception\PaginationException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -17,7 +19,7 @@ use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use OpenApi\Annotations as OA;
 
-#[Route(name:"common_", path:"/commons", requirements:["id" => "^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$"])]
+#[Route(path: "/commons", name: "common_", requirements: ["id" => "^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$"])]
 Class CommonController extends AbstractController
 {
     /**
@@ -44,14 +46,13 @@ Class CommonController extends AbstractController
      * required=true,)
      *@OA\Tag(name="common")
      **/
-    #[Route(name:"list",methods:"GET" , path:"/list&read" )]
+    #[Route(name:"list",methods:"GET"  )]
     #[AccessControl(["version" => "v1", "protocol"=>"rest", "formats"=>"json"])]
-    public function list(Request $request, PaginationManager $pm, string $version, string $protocol): Response
+    public function list(Request $request, PaginationManager $pm): Response
     {
         try {
-            /** @var \Oka\PaginationBundle\Pagination\Page $page */
             $page = $pm->paginate("common", $request, [], ['createdAt' => 'DESC']);
-        } catch (\Oka\PaginationBundle\Exception\PaginationException $e) {
+        } catch (PaginationException $e) {
             throw new BadRequestHttpException($e->getMessage(), $e);
         }
 
@@ -70,7 +71,7 @@ Class CommonController extends AbstractController
      */
     #[Route(name:"create", methods:"POST")]
     #[AccessControl(["version" => "v1", "protocol"=>"rest", "formats"=>"json"])]
-    public function create(EntityManagerInterface $em, string $version, string $protocol, array $requestContent): Response
+    public function create(EntityManagerInterface $em, array $requestContent): Response
     {
         $common = $this->edit(new Common(), $requestContent);
 
@@ -117,9 +118,9 @@ Class CommonController extends AbstractController
      * )
      * @OA\Tag(name="common")
      **/
-    #[Route(name:"read", methods:"GET", path:"/list&read/{id}")]
+    #[Route(path: "/{id}", name: "read", methods: "GET")]
     #[AccessControl(["version" =>"v1", "protocol" =>"rest", "formats" =>"json"])]
-    public function read(Request $request,Common $common, string $version, string $protocol): Response
+    public function read(Request $request,Common $common): Response
     {
         return $this->json($common,200,[],['groups' => $request->query->has('details') ? ['details'] : ['summary','referenceVille']]);
     }
@@ -128,10 +129,10 @@ Class CommonController extends AbstractController
      * Update a common.
      * @RequestContent(constraints="createConstraints")
      */
-    #[Route(name:"update", methods:["PUT", "PATCH"], path:"/{id}")]
+    #[Route(path: "/{id}", name: "update", methods: ["PUT", "PATCH"])]
     #[AccessControl(["version" => "v1", "protocol"=>"rest", "formats"=>"json"])]
     #[RequestContent(["constraints"=>"createConstraints"])]
-    public function update(EntityManagerInterface $em, Common $common, string $version, string $protocol, array $requestContent): Response
+    public function update(EntityManagerInterface $em, Common $common, array $requestContent): Response
     {
         $this->edit($common, $requestContent);
 
@@ -143,14 +144,14 @@ Class CommonController extends AbstractController
     /**
      * Delete a common.
      */
-    #[Route(name:"delete", methods:"DELETE", path:"/{id}")]
+    #[Route(path: "/{id}", name: "delete", methods: "DELETE")]
     #[AccessControl(["version" => "v1", "protocol"=>"rest", "formats"=>"json"])]
-    public function delete(EntityManagerInterface $em, Common $common, string $version, string $protocol): Response
+    public function delete(EntityManagerInterface $em, Common $common): Response
     {
         try {
             $em->remove($common);
             $em->flush();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw new ConflictHttpException($this->container->get('translator')->trans('http_error.request_cannot_be_processed', ['%id%' => $common->getId()], 'errors'), $e);
         }
 
@@ -159,7 +160,7 @@ Class CommonController extends AbstractController
 
     protected function edit(object $object, array $requestContent): object
     {
-        /** @var \App\Entity\Common $common */
+        /** @var Common $common */
         $common = parent::edit($object, $requestContent);
 
         if (true === isset($requestContent['department'])) {
@@ -177,9 +178,7 @@ Class CommonController extends AbstractController
 
     private static function updateConstraints(): Assert\Collection
     {
-        $constraints = self::itemConstraints(false);
-
-        return $constraints;
+        return self::itemConstraints(false);
     }
 
     private static function createConstraints(): Assert\Collection

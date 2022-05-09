@@ -5,6 +5,10 @@ namespace App\Controller;
 use App\Entity\Common;
 use App\Entity\CommunalSector;
 use Doctrine\ORM\EntityManagerInterface;
+use Exception;
+use Oka\PaginationBundle\Exception\PaginationException;
+use Psr\Container\ContainerExceptionInterface;
+use Psr\Container\NotFoundExceptionInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -17,7 +21,7 @@ use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use OpenApi\Annotations as OA;
 
-#[Route(name:"communal_sector_", path:"/communalSectors", requirements:["id" => "^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$"], defaults: ["version" => "v1", "protocol" => "rest"])]
+#[Route(path: "/communalSectors", name: "communal_sector_", requirements: ["id" => "^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$"], defaults: ["version" => "v1", "protocol" => "rest"])]
 Class CommunalSectorController extends AbstractController
 {
     /**
@@ -44,14 +48,13 @@ Class CommunalSectorController extends AbstractController
      * required=true,)
      *@OA\Tag(name="communal Sector")
      **/
-    #[Route(name:"list",methods:"GET",path:"/list&read")]
-    #[AccessControl(version:"v1", protocol:"rest", formats:"json")]
-    public function list(Request $request, PaginationManager $pm, string $version, string $protocol): Response
+    #[Route(name:"list",methods:"GET")]
+    #[AccessControl(["version" => "v1", "protocol"=>"rest", "formats"=>"json"])]
+    public function list(Request $request, PaginationManager $pm): Response
     {
         try {
-            /** @var \Oka\PaginationBundle\Pagination\Page $page */
             $page = $pm->paginate('communalSector', $request, [], ['createdAt' => 'DESC']);
-        } catch (\Oka\PaginationBundle\Exception\PaginationException $e) {
+        } catch (PaginationException $e) {
             throw new BadRequestHttpException($e->getMessage(), $e);
         }
 
@@ -65,13 +68,12 @@ Class CommunalSectorController extends AbstractController
 
     /**
      * Create a communalSector.
-     */
-    #[Route(name:"create", methods:"POST")]
-    #[AccessControl(version:"v1", protocol:"rest", formats:"json")]
-    /**
+     *
      * @RequestContent(constraints="createConstraints")
      */
-    public function create(EntityManagerInterface $em, string $version, string $protocol, array $requestContent): Response
+    #[Route(name:"create", methods:"POST")]
+    #[AccessControl(["version" => "v1", "protocol" => "rest", "formats" => "json"])]
+    public function create(EntityManagerInterface $em, array $requestContent): Response
     {
         $communalSector = $this->edit(new CommunalSector(), $requestContent);
 
@@ -119,21 +121,19 @@ Class CommunalSectorController extends AbstractController
      * )
      * @OA\Tag(name="communal Sector")
      **/
-    #[Route(name:"read", methods:"GET", path:"/list&read/{id}")]
-    #[AccessControl(version:"v1", protocol:"rest", formats:"json")]
-    public function read(CommunalSector $communalSector, string $version, string $protocol): Response
+    #[Route(path: "/{id}", name: "read", methods: "GET")]
+    #[AccessControl(["version" => "v1", "protocol" => "rest", "formats" => "json"])]
+    public function read(CommunalSector $communalSector): Response
     {
         return $this->json($communalSector);
     }
 
     /**
      * Update a communalSector.
-     */
-    #[Route(name:"update", methods:["PUT", "PATCH"], path:"/{id}")]
-    #[AccessControl(version:"v1", protocol:"rest", formats:"json")]
-    /**
      * @RequestContent(constraints="createConstraints")
-     */ 
+     */
+    #[Route(path: "/{id}", name: "update", methods: ["PUT", "PATCH"])]
+    #[AccessControl(["version" => "v1", "protocol" => "rest", "formats" => "json"])]
     public function update(EntityManagerInterface $em, CommunalSector $communalSector, string $version, string $protocol, array $requestContent): Response
     {
         $this->edit($communalSector, $requestContent);
@@ -146,23 +146,27 @@ Class CommunalSectorController extends AbstractController
     /**
      * Delete a communalSector.
      */
-    #[Route(name:"delete", methods:"DELETE", path:"/{id}")]
-    #[AccessControl(version:"v1", protocol:"rest", formats:"json")]
+    #[Route(path: "/{id}", name: "delete", methods: "DELETE")]
+    #[AccessControl(["version" => "v1", "protocol" => "rest", "formats" => "json"])]
     public function delete(EntityManagerInterface $em, CommunalSector $communalSector, string $version, string $protocol): Response
     {
         try {
             $em->remove($communalSector);
             $em->flush();
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             throw new ConflictHttpException($this->container->get('translator')->trans('http_error.request_cannot_be_processed', ['%id%' => $communalSector->getId()], 'errors'), $e);
         }
 
         return new JsonResponse(null, 204);
     }
 
+    /**
+     * @throws ContainerExceptionInterface
+     * @throws NotFoundExceptionInterface
+     */
     protected function edit(object $object, array $requestContent): object
     {
-        /** @var \App\Entity\CommunalSector $communalsector */
+        /** @var CommunalSector $communalsector */
         $communalSector = parent::edit($object, $requestContent);
 
         if (true === isset($requestContent['common'])) {
@@ -180,9 +184,7 @@ Class CommunalSectorController extends AbstractController
 
     private static function updateConstraints(): Assert\Collection
     {
-        $constraints = self::itemConstraints(false);
-
-        return $constraints;
+        return self::itemConstraints(false);
     }
 
     private static function createConstraints(): Assert\Collection

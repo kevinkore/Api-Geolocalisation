@@ -2,10 +2,14 @@ nelmio_api_doc:
     documentation:
         info:
             title: API Geo
-            description: This is a Administrative Breakdown API!
+            description: This is an awesome app!
             version: 1.0.0
     areas: # to filter documented areas
         path_patterns:
             - ^/api(?!/doc$) # Accepts routes under /api except /api/doc
-            - /list&read
-
+            - /{version}/{protocol}/districts
+            - /{version}/{protocol}/regions
+            - /{version}/{protocol}/departments
+            - /{version}/{protocol}/common
+            - /{version}/{protocol}/communalSector
+        disable_default_routes:

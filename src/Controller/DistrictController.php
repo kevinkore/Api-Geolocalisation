@@ -4,6 +4,7 @@ namespace App\Controller;
 
 use App\Entity\District;
 use Doctrine\ORM\EntityManagerInterface;
+use Oka\PaginationBundle\Exception\PaginationException;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Annotation\Route;
@@ -15,14 +16,16 @@ use Symfony\Component\Validator\Constraints as assert;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 use Symfony\Component\HttpKernel\Exception\BadRequestHttpException;
 use OpenApi\Annotations as OA;
+use Nelmio\ApiDocBundle\Annotation as Nelmio;
 
-#[Route(name:"district_", path:"/districts", requirements:["id" => "^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$"], defaults: ["version" => "v1", "protocol" => "rest"])]
+#[Route(path: "/districts", name: "district_", requirements: ["id" => "^[0-9a-fA-F]{8}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{4}\-[0-9a-fA-F]{12}$"], defaults: ["version" => "v1", "protocol" => "rest"])]
 Class DistrictController extends AbstractController
 {
     /**
      * List the district .
      *
      * @OA\Get(
+     *
      *     description="Returns districts",
      *     operationId=" App\Controller\distritController::list",
      *     @OA\Response(
@@ -36,21 +39,21 @@ Class DistrictController extends AbstractController
      *         )
      *     )
      * )
-     * @OA\Parameter(
-     * name="page",
-     * in="query",
-     * description="number of page",
-     * required=true,)
+     * @Nelmio\Areas({"internal"})
+     *  @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         description="number of page",
+     *         required=true,)
      *@OA\Tag(name="district")
      **/
-    #[Route(name:"list",methods:"GET",path:"/list&read")]
-    #[AccessControl(version:"v1", protocol:"rest", formats:"json")]
-    public function list(Request $request, PaginationManager $pm, string $version, string $protocol): Response
+    #[Route(name:"list",methods:"GET")]
+    #[AccessControl(["version" => "v1", "protocol" => "rest", "formats" => "json"])]
+    public function list(Request $request, PaginationManager $pm): Response
     {
         try {
-            /** @var \Oka\PaginationBundle\Pagination\Page $page */
             $page = $pm->paginate('district', $request, [], ['createdAt' => 'DESC']);
-        } catch (\Oka\PaginationBundle\Exception\PaginationException $e) {
+        } catch (PaginationException $e) {
             throw new BadRequestHttpException($e->getMessage(), $e);
         }
 
@@ -62,15 +65,13 @@ Class DistrictController extends AbstractController
         );
     }
 
-    /*
-     *create a district.
-     */
-    #[Route(name:"create", methods:"POST")]
-    #[AccessControl(version:"v1", protocol:"rest", formats:"json")]
     /**
+     * create a district.
      * @RequestContent(constraints="createConstraints")
      */
-    public function create(EntityManagerInterface $em, string $version, string $protocol, array $requestContent): Response
+    #[Route(name:"create", methods:"POST")]
+    #[AccessControl(["version" => "v1", "protocol" => "rest", "formats" => "json"])]
+    public function create(EntityManagerInterface $em, array $requestContent): Response
     {
         $district = $this->edit(new District(), $requestContent);
 
@@ -115,24 +116,24 @@ Class DistrictController extends AbstractController
      *         description="Order not found"
      *     )
      * )
+     * @Nelmio\Areas({"internal"})
      * @OA\Tag(name="district")
      **/
-    #[Route(name:"read", methods:"GET", path:"/list&read/{id}")]
-    #[AccessControl(version:"v1", protocol:"rest", formats:"json")]
-    public function read(District $district, string $version, string $protocol): Response
+    #[Route(path: "/{id}", name: "read", methods: "GET")]
+    #[AccessControl(["version" => "v1", "protocol" => "rest", "formats" => "json"])]
+    public function read(District $district): Response
     {
         return $this->json($district);
     }
 
     /**
      * Update a district.
-     */
-    #[Route(name:"update", methods:["PUT", "PATCH"], path:"/{id}")]
-    #[AccessControl(version:"v1", protocol:"rest", formats:"json")]
-    /**
+     *
      * @RequestContent(constraints="createConstraints")
      */
-    public function update(EntityManagerInterface $em, District $district, string $version, string $protocol, array $requestContent): Response
+    #[Route(path: "/{id}", name: "update", methods: ["PUT", "PATCH"])]
+    #[AccessControl(["version" => "v1", "protocol" => "rest", "formats" => "json"])]
+    public function update(EntityManagerInterface $em, District $district, array $requestContent): Response
     {
         $this->edit($district, $requestContent);
 
@@ -144,9 +145,9 @@ Class DistrictController extends AbstractController
     /**
      * Delete a district.
      */
-    #[Route(name:"delete", methods:"DELETE", path:"/{id}")]
-    #[AccessControl(version:"v1", protocol:"rest", formats:"json")]
-    public function delete(EntityManagerInterface $em, District $district, string $version, string $protocol): Response
+    #[Route(path: "/{id}", name: "delete", methods: "DELETE")]
+    #[AccessControl(["version" => "v1", "protocol" => "rest", "formats" => "json"])]
+    public function delete(EntityManagerInterface $em, District $district): Response
     {
         try {
             $em->remove($district);
@@ -156,13 +157,6 @@ Class DistrictController extends AbstractController
         }
 
         return new JsonResponse(null, 204);
-    }
-
-    private static function updateConstraints(): Assert\Collection
-    {
-        $constraints = self::itemConstraints(false);
-
-        return $constraints;
     }
 
     private static function createConstraints(): Assert\Collection
