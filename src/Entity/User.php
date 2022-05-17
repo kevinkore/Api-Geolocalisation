@@ -35,6 +35,9 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\Column(type:"string")]
     private string $password;
 
+    #[ORM\Column(type:"boolean")]
+    private Bool $isActivated;
+
     public function getId(): Uuid
     {
         return $this->id;
@@ -57,17 +60,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      *
      * @see UserInterface
      */
-    public function getUserIdentifier(): ?User
+    public function getUserIdentifier(): ?string
     {
-        return  $this;
+        return $this->email;
     }
 
     /**
      * @deprecated since Symfony 5.3
      */
-    public function getUsername(): string
+    public function getUsername(): ?string
     {
-        return (string) $this->email;
+        return $this->email;
     }
 
     /**
@@ -105,6 +108,22 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     }
 
     /**
+     * @return bool
+     */
+    public function getIsActivated(): bool
+    {
+        return $this->isActivated;
+    }
+
+    public function setIsActivated(bool $isActivated): self
+    {
+        $this->isActivated = $isActivated;
+
+        return $this;
+    }
+
+
+    /**
      * Returning a salt is only needed, if you are not using a modern
      * hashing algorithm (e.g. bcrypt or sodium) in your security.yaml.
      *
@@ -122,5 +141,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     {
         // If you store any temporary, sensitive data on the user, clear it here
         // $this->plainPassword = null;
+    }
+
+    public function getUser():?User
+    {
+        return $this;
     }
 }

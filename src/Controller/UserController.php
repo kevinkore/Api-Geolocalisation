@@ -54,7 +54,7 @@ Class UserController extends AbstractController
     public function updatePassword(Request $request, EntityManagerInterface $em, User $account, UserPasswordHasherInterface $userPasswordHasher, string $version, string $protocol, array $requestContent): Response
     {
         /** @var User $user */
-        $user = $account->getUserIdentifier();
+        $user = $account->getUser();
         $oldPasswordIsValid = $userPasswordHasher->isPasswordValid(
             $user,
             $requestContent['oldPassword']

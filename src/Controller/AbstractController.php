@@ -7,6 +7,7 @@ use Oka\PaginationBundle\Pagination\PaginationManager;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController as BaseAbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\Mailer\MailerInterface;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\PropertyAccess\PropertyAccess;
 use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
@@ -29,6 +30,7 @@ class AbstractController extends BaseAbstractController
                 'oka_pagination.manager' => '?'.PaginationManager::class,
                 'doctrine.orm.entity_manager' => '?'.EntityManagerInterface::class,
                 'password.hashes' => '?'.UserPasswordHasherInterface::class,
+                'mailer.interface'=>'?'.MailerInterface::class,
             ],
         ];
     }
