@@ -5,10 +5,12 @@ namespace App\Controller;
 use App\Entity\User;
 use Doctrine\ORM\EntityManagerInterface;
 use Exception;
+use OTPHP\TOTP;
+use ParagonIE\ConstantTime\Base32;
+use Symfony\Bridge\Twig\Mime\TemplatedEmail;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Mailer\Exception\TransportExceptionInterface;
 use Symfony\Component\Mime\Address;
-use Symfony\Component\Mime\Email;
 use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Symfony\Component\Routing\Annotation\Route;
 use Oka\InputHandlerBundle\Annotation\AccessControl;
@@ -33,11 +35,12 @@ Class RegisterController extends AbstractController
         $em->persist($user);
         $em->flush();
 
-        $email = (new Email())
+        $secret = Base32::encodeUpper("Mum");
+        $otp = TOTP::create($secret,300,'sha1',8);
+        $email = (new TemplatedEmail())
             ->from(new Address($this->getParameter("app.admin_email"),'Confirmation Email'))
             ->to($user->getEmail())
-            ->subject('Please Confirm your Email')
-            ->html('<p>Twig integration for better HTML integration!</p>');
+            ->htmlTemplate('EmailConfirmation.html.twig')->context(['token'=>$otp->now()]);
         try {
             $mailer = $this->container->get("mailer.interface");
             $mailer->send($email);
@@ -84,9 +87,10 @@ Class RegisterController extends AbstractController
     {
         $className = true === $required ? Assert\Required::class : Assert\Optional::class;
 
-        return new Assert\Collection([
-            'email' => new $className(new Assert\NotBlank()),
-            'password' => new $className(new Assert\NotBlank()),
+        return new Assert\Collection(
+        [
+            'email' => new $className(new Assert\Email()),
+            'password' => new $className(new Assert\NotCompromisedPassword()),
         ]);
     }
 }
