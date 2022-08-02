@@ -42,6 +42,7 @@ Class RegisterController extends AbstractController
             ->to($user->getEmail())
             ->htmlTemplate('EmailConfirmation.html.twig')->context(['token'=>$otp->now()]);
         try {
+            /** * @var MailerInterface $mailer */
             $mailer = $this->container->get("mailer.interface");
             $mailer->send($email);
         } catch (TransportExceptionInterface $e) {

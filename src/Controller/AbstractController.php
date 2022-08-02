@@ -3,17 +3,17 @@
 namespace App\Controller;
 
 use Doctrine\ORM\EntityManagerInterface;
-use Oka\PaginationBundle\Pagination\PaginationManager;
-use Symfony\Bundle\FrameworkBundle\Controller\AbstractController as BaseAbstractController;
-use Symfony\Component\HttpFoundation\JsonResponse;
-use Symfony\Component\HttpFoundation\Response;
-use Symfony\Component\Mailer\MailerInterface;
-use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
-use Symfony\Component\PropertyAccess\PropertyAccess;
-use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
 use Symfony\Component\Validator\Constraint;
-use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\Mailer\MailerInterface;
+use Symfony\Component\HttpFoundation\Response;
+use Symfony\Component\HttpFoundation\JsonResponse;
+use Symfony\Component\PropertyAccess\PropertyAccess;
+use Oka\PaginationBundle\Pagination\PaginationManager;
 use Symfony\Contracts\Translation\TranslatorInterface;
+use Symfony\Component\Validator\Validator\ValidatorInterface;
+use Symfony\Component\Serializer\Normalizer\AbstractObjectNormalizer;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
+use Symfony\Bundle\FrameworkBundle\Controller\AbstractController as BaseAbstractController;
 
 /**
  * @author Cedrick Oka Baidai <cedric.baidai@veone.net>
@@ -30,7 +30,7 @@ class AbstractController extends BaseAbstractController
                 'oka_pagination.manager' => '?'.PaginationManager::class,
                 'doctrine.orm.entity_manager' => '?'.EntityManagerInterface::class,
                 'password.hashes' => '?'.UserPasswordHasherInterface::class,
-                'mailer.interface'=>'?'.MailerInterface::class,
+                'mailer.interface' => '?'.MailerInterface::class,
             ],
         ];
     }
